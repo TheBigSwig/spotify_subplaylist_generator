@@ -1,0 +1,4 @@
+This application is based off of the Spotipy Python library: https://spotipy.readthedocs.io/en/2.25.1/
+
+Before executing spotify_subplaylist_generator.py, you need to source credentials for the Spotify app that will handle API requests
+into your shell environment. This can be done by sourcing the example "spotify_app_credentials.sh" script (with real credentials filled in).
