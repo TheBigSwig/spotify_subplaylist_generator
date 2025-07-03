@@ -17,6 +17,22 @@ def get_user_playlists(spotify_client : spotipy.Spotify) -> List[Dict]:
                                                              offset=len(user_playlists))
     return user_playlists
 
+def get_playlist_tracks(spotify_client : spotipy.Spotify, playlist_uri : str) -> List[Dict]:
+    playlist_tracks = []
+    num_tracks_per_request = 100
+
+    api_response = spotify_client.playlist_items(playlist_uri,
+                                                 limit=num_tracks_per_request,
+                                                 additional_types=('track',))
+    while len(api_response['items']) > 0:
+        for track in api_response['items']:
+            playlist_tracks.append(track)
+        api_response = spotify_client.playlist_items(playlist_uri,
+                                                     limit=num_tracks_per_request,
+                                                     offset=len(playlist_tracks),
+                                                     additional_types=('track',))
+    return playlist_tracks
+
 def main():
     print("Welcome to the Spotify Subplaylist Generator!")
     
