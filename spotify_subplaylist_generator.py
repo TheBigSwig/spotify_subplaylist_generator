@@ -80,8 +80,60 @@ def main():
         return
     
     print("\nUser playlists:")
-    for playlist in user_playlists:
-        print(f"> {playlist['name']}")
+    for index, playlist in enumerate(user_playlists):
+        print(f"{index}) {playlist['name']}")
+
+    desired_playlist_index = None
+    while desired_playlist_index is None:
+        try:
+            user_input = int(input("\nEnter the index of the playlist you wish to generate subplaylists from: "))
+            if user_input < 0 or user_input >= len(user_playlists):
+                print("Invalid selection!")
+            else:
+                desired_playlist_index = user_input
+        except ValueError:
+            print("Invalid selection!")
+    
+    print("\nCurrently supported filters for generating a subset playlist:")
+    print("0) Genre")
+
+    filter_index = None
+    while filter_index is None:
+        try:
+            user_input = int(input("\nEnter the index of the filter you wish to use: "))
+            if user_input != 0:
+                print("Invalid selection!")
+            else:
+                filter_index = user_input
+        except ValueError:
+            print("Invalid selection!")
+    
+    print("\nYou can find a list of some of the main Spotify genres here: https://open.spotify.com/genre/0JQ5DArNBzkmxXHCqFLx3c")
+    selected_genre = input("Enter the (lowercase) name of the genre you wish to filter by: ")
+
+    print(f"\nRetrieving songs from '{user_playlists[desired_playlist_index]['name']}'...")
+    playlist_tracks = get_playlist_tracks(spotify_client, user_playlists[desired_playlist_index]['uri'])
+
+    print(f"\nRetrieving artist info for all artists referenced in '{user_playlists[desired_playlist_index]['name']}'...")
+    artist_info_dictionary = get_artist_info_for_tracks(spotify_client, playlist_tracks)
+
+    print(f"\nFiltering all '{selected_genre}' songs from '{user_playlists[desired_playlist_index]['name']}'...")
+    filtered_tracks = []
+    for index, playlist_track in enumerate(playlist_tracks):
+        if not playlist_track['track']['is_local']:
+            for artist in playlist_track['track']['artists']:
+                artist_info = artist_info_dictionary[artist['uri']]
+                if selected_genre in artist_info['genres']:
+                    filtered_tracks.append(playlist_track)
+                    break
+
+    if len(filtered_tracks) == 0:
+        print(f"\nNo '{selected_genre}' songs were found in '{user_playlists[desired_playlist_index]['name']}'")
+    else:
+        subplaylist_name = input("\nEnter the desired name for the new subplaylist: ")
+        print(f"\nCreating '{subplaylist_name}' subplaylist from filtered songs...")
+        create_playlist_with_tracks(spotify_client, subplaylist_name, filtered_tracks)
+        print("\nSubplaylist was successfully created!")
 
 if __name__ == "__main__":
     main()
