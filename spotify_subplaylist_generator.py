@@ -4,6 +4,7 @@ import spotipy
 from spotipy.oauth2 import SpotifyOAuth
 
 from typing import Dict, List
+import math
 
 def get_user_playlists(spotify_client : spotipy.Spotify) -> List[Dict]:
     user_playlists = []
@@ -32,6 +33,24 @@ def get_playlist_tracks(spotify_client : spotipy.Spotify, playlist_uri : str) ->
                                                      offset=len(playlist_tracks),
                                                      additional_types=('track',))
     return playlist_tracks
+
+# Returns a dictionary mapping artist URI to artist info for all artists of a list of tracks.
+def get_artist_info_for_tracks(spotify_client : spotipy.Spotify, tracks : List[Dict]) -> Dict[str, Dict]:
+    referenced_artists_uris = set()
+    for track in tracks:
+        if not track['track']['is_local']:
+            for artist in track['track']['artists']:
+                referenced_artists_uris.add(artist['uri'])
+    referenced_artists_uris = list(referenced_artists_uris)
+
+    all_artists_info = {}
+    batch_size = 50
+    for slice_index in range(math.ceil(len(referenced_artists_uris) / batch_size)):
+        artist_uris_batch = referenced_artists_uris[(slice_index * batch_size) : ((slice_index + 1) * batch_size)]
+        batch_artist_info = spotify_client.artists(artist_uris_batch)
+        for artist_info in batch_artist_info['artists']:
+            all_artists_info[artist_info['uri']] = artist_info
+    return all_artists_info
 
 def main():
     print("Welcome to the Spotify Subplaylist Generator!")
